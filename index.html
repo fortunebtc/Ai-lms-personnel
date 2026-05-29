@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI LMS Platform</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+    }
+
+    header {
+      background: #1e293b;
+      padding: 15px;
+      text-align: center;
+      font-size: 20px;
+    }
+
+    .container {
+      display: flex;
+      height: calc(100vh - 51px);
+    }
+
+    .sidebar {
+      width: 250px;
+      background: #111827;
+      padding: 15px;
+    }
+
+    .sidebar button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      background: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    .sidebar button:hover { background: #1d4ed8; }
+    .sidebar button.active { background: #1e40af; border-left: 3px solid #38bdf8; }
+
+    .main {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .card {
+      background: #1f2937;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+    }
+
+    .card h2 { margin: 0 0 8px; font-size: 1.3rem; }
+    .card h3 { margin: 0 0 12px; font-size: 1.1rem; }
+    .card p  { margin: 0; color: #94a3b8; font-size: 0.9rem; }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: none;
+      background: #0f172a;
+      color: white;
+      font-family: Arial;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    textarea { resize: none; height: 44px; }
+    input:focus, textarea:focus { outline: 1px solid #2563eb; }
+
+    .chat {
+      height: 300px;
+      overflow-y: auto;
+      background: #0b1220;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+    }
+
+    .chat .line { margin-bottom: 8px; font-size: 0.88rem; line-height: 1.5; }
+    .user { color: #38bdf8; }
+    .ai   { color: #34d399; }
+
+    .typing-dots { display: inline-flex; gap: 4px; align-items: center; padding: 4px 0; }
+    .typing-dots span {
+      width: 7px; height: 7px;
+      background: #34d399;
+      border-radius: 50%;
+      animation: blink 0.8s infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+    .send-row { display: flex; gap: 8px; align-items: flex-end; }
+    .send-row textarea { flex: 1; margin-top: 0; }
+
+    .btn {
+      padding: 10px 18px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .btn:hover { background: #1d4ed8; }
+
+    /* PAGES */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* STATS */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .stat {
+      background: #1f2937;
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat .num { font-size: 1.8rem; font-weight: bold; color: #38bdf8; }
+    .stat .lbl { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+
+    /* PROGRESS */
+    .prog-row { margin-bottom: 12px; }
+    .prog-label { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px; color: #cbd5e1; }
+    .prog-bar { background: #0f172a; border-radius: 999px; height: 7px; overflow: hidden; }
+    .prog-fill { height: 100%; background: #2563eb; border-radius: 999px; }
+
+    /* COURSES */
+    .course-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 12px;
+    }
+    .course-card {
+      background: #1f2937;
+      border-radius: 10px;
+      padding: 16px;
+      border-top: 3px solid #2563eb;
+    }
+    .course-card.c2 { border-top-color: #34d399; }
+    .course-card.c3 { border-top-color: #a78bfa; }
+    .course-card.c4 { border-top-color: #f97316; }
+    .course-card h4 { margin: 0 0 6px; font-size: 0.95rem; }
+    .course-card p  { color: #94a3b8; font-size: 0.8rem; margin: 0 0 10px; }
+    .course-card .meta { font-size: 0.75rem; color: #64748b; margin-bottom: 10px; }
+    .course-card .tag { font-size: 0.68rem; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* PAYMENT */
+    .plans {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .plan {
+      background: #1f2937;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      border: 1px solid #1e293b;
+      position: relative;
+    }
+    .plan.featured { border-color: #2563eb; }
+    .plan .best { position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+      background: #2563eb; font-size: 0.65rem; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+    .plan .price { font-size: 1.8rem; font-weight: bold; color: #38bdf8; margin: 10px 0 4px; }
+    .plan .pdesc { font-size: 0.8rem; color: #94a3b8; margin-bottom: 14px; }
+    .plan ul { list-style: none; padding: 0; margin: 0 0 16px; text-align: left; font-size: 0.8rem; color: #94a3b8; }
+    .plan ul li::before { content: '✓ '; color: #34d399; }
+    .plan ul li { margin-bottom: 5px; }
+
+    #receipt {
+      display: none;
+      background: #0b1220;
+      border: 1px solid #34d399;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: #34d399;
+      font-family: monospace;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+
+<header>🚀 AI LMS Platform</header>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <button class="active" onclick="show('dashboard', this)">📊 Dashboard</button>
+    <button onclick="show('courses', this)">📚 Courses</button>
+    <button onclick="show('ai', this)">🤖 AI Tutor</button>
+    <button onclick="show('payment', this)">💳 Payment</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="page active">
+      <div class="stats">
+        <div class="stat"><div class="num">3</div><div class="lbl">Enrolled</div></div>
+        <div class="stat"><div class="num">12</div><div class="lbl">Lessons Done</div></div>
+        <div class="stat"><div class="num">47%</div><div class="lbl">Avg Progress</div></div>
+        <div class="stat"><div class="num">₦1.5k</div><div class="lbl">Spent</div></div>
+      </div>
+      <div class="card">
+        <h2>Welcome back 👋</h2>
+        <p>Pick up where you left off. Your AI tutor is ready.</p>
+      </div>
+      <div class="card">
+        <h3>Current Progress</h3>
+        <div class="prog-row">
+          <div class="prog-label"><span>Python Fundamentals</span><span>65%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:65%"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-label"><span>Machine Learning Basics</span><span>30%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:30%"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-label"><span>Web Dev with AI</span><span>80%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:80%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COURSES -->
+    <div id="courses" class="page">
+      <div class="card" style="margin-bottom:14px;">
+        <h3>All Courses</h3>
+        <p>Each level unlocks after payment. ₦500 per level.</p>
+      </div>
+      <div class="course-grid" id="courseList">
+        <p style="color:#64748b;font-size:0.85rem;">Loading...</p>
+      </div>
+    </div>
+
+    <!-- AI TUTOR -->
+    <div id="ai" class="page">
+      <div class="card">
+        <h3>🤖 AI Tutor</h3>
+        <div class="chat" id="chatLog">
+          <div class="line ai"><strong>AI:</strong> Hey! Ask me anything about Python, ML, or web development.</div>
+        </div>
+        <div class="send-row">
+          <textarea id="question" placeholder="Type your question... (Enter to send)"></textarea>
+          <button class="btn" onclick="askAI()">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENT -->
+    <div id="payment" class="page">
+      <div class="card">
+        <h3>💳 Payment</h3>
+        <p>One-time payment per level. No subscription, no hidden fees.</p>
+      </div>
+      <div class="plans">
+        <div class="plan">
+          <div class="price">₦500</div>
+          <div class="pdesc">Single Level</div>
+          <ul>
+            <li>Full access to 1 level</li>
+            <li>AI Tutor support</li>
+            <li>Certificate on completion</li>
+          </ul>
+          <button class="btn" onclick="pay('Single Level','₦500')">Pay ₦500</button>
+        </div>
+        <div class="plan featured">
+          <div class="best">BEST VALUE</div>
+          <div class="price">₦1,500</div>
+          <div class="pdesc">Full Bundle — All 4 Levels</div>
+          <ul>
+            <li>All 4 levels unlocked</li>
+            <li>Priority AI Tutor</li>
+            <li>All certificates</li>
+            <li>Save ₦500</li>
+          </ul>
+          <button class="btn" onclick="pay('Full Bundle','₦1,500')">Pay ₦1,500</button>
+        </div>
+      </div>
+      <div id="receipt"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API = "http://localhost:5000/api";
+
+  // ── NAVIGATION ──────────────────────────────────────────────
+  function show(pageId, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    document.querySelectorAll('.sidebar button').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    // reload courses from backend whenever the courses tab is opened
+    if (pageId === 'courses') loadCourses();
+  }
+
+  // ── COURSES — load from backend ──────────────────────────────
+  async function loadCourses() {
+    const list = document.getElementById('courseList');
+    list.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">Loading...</p>';
+    try {
+      const res  = await fetch(API + '/course');
+      const data = await res.json();
+      list.innerHTML = '';
+      if (!data.length) {
+        list.innerHTML = '<p style="color:#64748b;">No courses found.</p>';
+        return;
+      }
+      const colors = ['', 'c2', 'c3', 'c4'];
+      data.forEach((c, i) => {
+        list.innerHTML += `
+          <div class="course-card ${colors[i % 4]}">
+            <div class="tag">Level ${c.level}</div>
+            <h4>${c.title}</h4>
+            <p>${c.description || ''}</p>
+            <div class="meta">${c.lessons ? '📖 ' + c.lessons + ' lessons' : ''} ${c.duration ? '· ⏱ ' + c.duration : ''}</div>
+            <button class="btn" onclick="show('payment', document.querySelectorAll('.sidebar button')[3])">Enroll — ₦500</button>
+          </div>`;
+      });
+    } catch (e) {
+      list.innerHTML = '<p style="color:#f87171;">Could not reach backend. Showing static courses.</p>';
+      renderStaticCourses();
+    }
+  }
+
+  function renderStaticCourses() {
+    const list = document.getElementById('courseList');
+    const courses = [
+      { level:1, title:'Python Fundamentals',    desc:'Variables, loops, functions, and data structures.',      meta:'📖 12 lessons · ⏱ 4hrs', cls:'' },
+      { level:2, title:'Machine Learning Basics', desc:'Supervised learning, regression, and classification.',   meta:'📖 15 lessons · ⏱ 6hrs', cls:'c2' },
+      { level:3, title:'Web Dev with AI',         desc:'Build real products powered by AI APIs.',                meta:'📖 10 lessons · ⏱ 5hrs', cls:'c3' },
+      { level:4, title:'Deep Learning & LLMs',    desc:'Neural networks, transformers, and fine-tuning.',        meta:'📖 18 lessons · ⏱ 8hrs', cls:'c4' },
+    ];
+    list.innerHTML = courses.map(c => `
+      <div class="course-card ${c.cls}">
+        <div class="tag">Level ${c.level}</div>
+        <h4>${c.title}</h4>
+        <p>${c.desc}</p>
+        <div class="meta">${c.meta}</div>
+        <button class="btn" onclick="show('payment', document.querySelectorAll('.sidebar button')[3])">Enroll — ₦500</button>
+      </div>`).join('');
+  }
+
+  // ── AI TUTOR — tries backend first, falls back to Anthropic ──
+  const history = [];
+
+  document.getElementById('question').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askAI(); }
+  });
+
+  async function askAI() {
+    const ta  = document.getElementById('question');
+    const msg = ta.value.trim();
+    if (!msg) return;
+    ta.value = '';
+
+    addLine('user', msg);
+    history.push({ role: 'user', content: msg });
+
+    const log = document.getElementById('chatLog');
+    const dot = document.createElement('div');
+    dot.className = 'line ai typing-dots';
+    dot.innerHTML = '<span></span><span></span><span></span>';
+    log.appendChild(dot);
+    log.scrollTop = log.scrollHeight;
+
+    let reply = '';
+
+    // 1) Try your backend
+    try {
+      const res  = await fetch(API + '/ai/ask', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ question: msg })
+      });
+      const data = await res.json();
+      reply = data.answer || '';
+    } catch (_) { /* backend offline — fall through */ }
+
+    // 2) Fallback: call Anthropic directly
+    if (!reply) {
+      try {
+        const res  = await fetch('https://api.anthropic.com/v1/messages', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1000,
+            system: 'You are a friendly AI tutor. Help students learn Python, ML, Web Dev, and AI. Be clear and practical.',
+            messages: history
+          })
+        });
+        const data = await res.json();
+        reply = data.content?.map(b => b.text || '').join('') || 'Something went wrong.';
+      } catch (e) {
+        reply = 'Network error. Please try again.';
+      }
+    }
+
+    dot.remove();
+    addLine('ai', reply);
+    history.push({ role: 'assistant', content: reply });
+  }
+
+  function addLine(role, text) {
+    const log = document.getElementById('chatLog');
+    const div = document.createElement('div');
+    div.className = 'line ' + role;
+    div.innerHTML = `<strong>${role === 'user' ? 'You' : 'AI'}:</strong> ${text}`;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  // ── PAYMENT — placeholder (Paystack next step) ───────────────
+  function pay(plan, amount) {
+    // TODO: replace body with real Paystack popup when ready
+    const ref = 'TXN' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    const now = new Date().toLocaleString('en-NG');
+    const r   = document.getElementById('receipt');
+    r.style.display = 'block';
+    r.innerHTML = `✅ PAYMENT SUCCESSFUL\n───────────────────────\nPlan:   ${plan}\nAmount: ${amount}\nRef:    ${ref}\nDate:   ${now}\n───────────────────────\nYour level has been unlocked.\n\n⚠️  Paystack integration coming next step.`;
+    r.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // ── INIT ─────────────────────────────────────────────────────
+  loadCourses();
+</script>
+</body>
+</html>
